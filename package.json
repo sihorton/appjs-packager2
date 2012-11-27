@@ -1,0 +1,6 @@
+{
+	"name": "appjs-packager2"
+	,"version": "2.0.1"
+	,"description": "Create packaged resources with streaming support."
+	,"main": "index.js"
+}
