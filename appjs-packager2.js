@@ -32,22 +32,23 @@ var path = require("path");
 var appPackage = "";
 var modulesWaiting = 0;
 var modulesWritten = function() {
-	console.log("modules written");
+	//console.log("node_modules packaged");
+	console.log("packaging app");
 	//appInfo.packageVer = appInfo.packageVer+1;
 	
 	fs.writeFile(appFolder+"/"+config.appInfoFile,JSON.stringify(appInfo, null,4),function(err) {
 		if (err) {
 			console.log(err);
-		} else {
-			console.log("wrote "+appFolder+"/"+config.appInfoFile);
 		}
+		console.log("\t",config.appInfoFile);
 		packageApp();
+		
 	});
 	fs.writeFile(appFolder+"/deploy/"+appInfo.name+".appjs.json",JSON.stringify(appInfo, null,4),function(err) {
 		if (err) {
 			console.log(err);
 		} else {
-			console.log("wrote "+appFolder+"/deploy/"+appInfo.name+".appjs.json");
+			console.log("\t","deploy/"+appInfo.name+".appjs.json");
 		}
 	});
 }
@@ -121,7 +122,7 @@ fs.stat(process.argv[2], function(err, stats) {
 });
 
 function packageApp(extraFiles,callBack) {
-	process.stdout.write('scanning folder: '+appFolder+'\n');
+	//process.stdout.write('scanning folder: '+appFolder+'\n');
 	var exclude= {
 		'bin':'bin'
 		,'node_modules':'node_modules'
@@ -137,23 +138,24 @@ function packageApp(extraFiles,callBack) {
 				bundle.createPackage(appPackage,appFolder);
 				//package file == appPackage
 				//files = files..
-				console.log("bunding package into:",appPackage);
-				console.log("app folder:",appFolder);
+				console.log("writing package");
+				console.log("\t",path.relative(appFolder,appPackage));
+				//console.log("app folder:",appFolder);
 				//var bundle = fs.createWriteStream(appPackage,{});
 				//bundle.end();
 				bundle.addFiles(files,function() {
-					console.log("bundle written");
+					//console.log("bundle written");
 					if (config.zipPackage == "gz") {
 						var zlib = require('zlib');
 						var gzip = zlib.createGzip();
 						var inp = fs.createReadStream(appPackage);
 						var out = fs.createWriteStream(appPackage+'.gz');
 						out.on('close',function() {
-							console.log("wrote ",appPackage+'.gz');
-						
+							console.log("\t",path.relative(appFolder,appPackage+'.gz'));
+						console.log("opertion complete.");
 							//test getting the data back....
 							/*var bundle4 = require("appjs-package2").Package();
-							console.log("test extraction",appPackage);
+							console.log("test extraction",path.relative(appFolder,appPackage));
 							bundle4.readPackage(appPackage,function() {
 								bundle4.extractAllTo(appPackage+'.out/',function() {
 									console.log("extracted package");
@@ -180,7 +182,7 @@ function packageApp(extraFiles,callBack) {
 						} else {
 							var buff = archive.toBuffer();
 							fs.writeFile(appPackage, buff, function () {
-								process.stdout.write("wrote "+appPackage+'\n');
+								process.stdout.write("\t",path.relative(appFolder,appPackage)+'\n');
 								if (config.zipPackage == 'archiver') {
 									var archiver = require("archiver");//alternative: zipstream-ctalkington
 									var out = fs.createWriteStream(appPackage+'.zip');
@@ -188,7 +190,7 @@ function packageApp(extraFiles,callBack) {
 									zip.pipe(out);
 									zip.addFile(fs.createReadStream(appPackage), { name: path.basename(appPackage),store:false }, function() {
 										zip.finalize(function(written) { 
-											console.log("wrote "+appPackage+".zip "+Math.round(written/1024)+'k\n');
+											console.log("wrote "+path.relative(appFolder,appPackage+".zip")+" "+Math.round(written/1024)+'k\n');
 											if (callBack) {
 												callBack();
 											}
@@ -218,7 +220,7 @@ function packageApp(extraFiles,callBack) {
 							});
 						} else {
 							zip.finalize(function(written) { 
-								console.log("wrote "+appPackage+" "+Math.round(written/1024)+'k\n');
+								console.log("wrote "+path.relative(appFolder,appPackage)+" "+Math.round(written/1024)+'k\n');
 							});
 						}
 					}
@@ -232,7 +234,10 @@ function packageApp(extraFiles,callBack) {
 
 function scanModules() {
 	//scan node modules
-	console.log("scanning node_modules");
+	console.log('application folder:');
+	console.log("\t",appFolder);
+	console.log('');
+	console.log("packaging node_modules");
 	fs.readdir(appFolder+"/node_modules", function(err, list) {
 		if (err) {
 			if (err.code ==  'ENOENT') {
@@ -298,21 +303,21 @@ function packModule(module,moduleName,appFolder,callBack) {
 					if (err) {
 						process.stdout.write("error while adding files: "+ err);
 					} else {
-						console.log("module written");
+						//console.log("module written");
 						if (config.zipPackage == "gz") {
 							var zlib = require('zlib');
 							var gzip = zlib.createGzip();
 							var inp = fs.createReadStream(modulePack);
 							var out = fs.createWriteStream(modulePack+'.gz');
 							out.on('close',function() {
-								console.log("wrote ",modulePack+'.gz');
+								console.log("\t",path.relative(appFolder,modulePack+'.gz'));
 								
 								//test getting the data back....
 							var bundle3 = require("appjs-package2").Package();
-							console.log("test extraction",modulePack);
+							//console.log("\t (test extract)");
 							bundle3.readPackage(modulePack,function() {
 								bundle3.extractAllTo(modulePack+'.out/',function() {
-									console.log("extracted module");
+									//console.log("extracted module");
 								})
 							});
 								if (!--modulesWaiting) {
@@ -334,7 +339,6 @@ function packModule(module,moduleName,appFolder,callBack) {
 			}
 			
 			if (config.modArchiver == "node-native-zip") {
-	console.log("here7");
 				var apack = require("./node-native-zip");			
 				var archive = new apack(modulePack);
 				archive.addFiles(files, function (err) {
@@ -343,14 +347,14 @@ function packModule(module,moduleName,appFolder,callBack) {
 					} else {
 						var buff = archive.toBuffer();
 						fs.writeFile(modulePack, buff, function () {
-							process.stdout.write("wrote "+modulePack+'\n');
+							console.log("\t"+path.relative(appFolder,modulePack)+'\n');
 							//compress the output file..
 							var zlib = require('zlib');
 							var gzip = zlib.createGzip();
 							var inp = fs.createReadStream(modulePack);
 							var out = fs.createWriteStream(modulePack+'.gz');
 							out.on('close',function() {
-								console.log("wrote ",modulePack+'.gz');
+								console.log("wrote ",path.relative(appFolder,modulePack+'.gz'));
 								if (config.delRawPackage) {
 									fs.unlink(modulePack);
 								}
@@ -368,7 +372,7 @@ function packModule(module,moduleName,appFolder,callBack) {
 				});
 			} else {
 				if (config.modArchiver == "archiver") {
-	console.log("here7");
+	
 					var archiver = require("archiver");//alternative: zipstream-ctalkington
 					var out = fs.createWriteStream(modulePack);
 					var zip = archiver.createZip({ level: 1 });
@@ -383,7 +387,7 @@ function packModule(module,moduleName,appFolder,callBack) {
 							});
 						} else {
 							zip.finalize(function(written) { 
-								console.log("wrote "+modulePack+" "+Math.round(written/1024)+'k');
+								console.log("wrote "+path.relative(appFolder,modulePack)+" "+Math.round(written/1024)+'k');
 								if (!--modulesWaiting) {
 									modulesWritten();
 									if (callBack) {
@@ -412,7 +416,7 @@ var walk = function(dir, done, exclude, basePath, silent) {
       file = dir + '/' + file;
 	  	  fs.stat(file, function(err, stat) {
 			if (exclude[file.substring(basePath)]) {
-				process.stdout.write("excluding:"+file.substring(basePath)+'\n');
+				//process.stdout.write("excluding:"+file.substring(basePath)+'\n');
 				if (!--pending) done(null, results);
 			} else {
 		  
@@ -424,7 +428,7 @@ var walk = function(dir, done, exclude, basePath, silent) {
 				} else {
 					if (silent) {
 					}else {
-						process.stdout.write(file.substring(basePath)+'\n');
+						console.log("\t",file.substring(basePath));
 					}
 					results.push({name:file.substring(basePath),path:file});
 				  if (!--pending) done(null, results);
