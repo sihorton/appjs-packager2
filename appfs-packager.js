@@ -1,13 +1,19 @@
+/**
+* command line program to make it very easy to package
+* files into an application virtual file system.
+*/
 var path = require("path");
 
 var config = {
-	packageExt:'.bundle'
-	,modulePackageExt:'.modpack'
+	fsExt:'.appfs'
+	,modulefsExt:'.modfs'
 	,appInfoFile:'package.json'
+	,modArchiver:'sihorton-vfs'
+	
+	
 	,deployFolder:'deploy'
 	,archiver2:'bundle'//'archiver'
 	,zipPackage:'gz'//'archiver' or 'gz'
-	,modArchiver:'bundle'
 	,moduleCompress:'gz'
 	,archiver:'archiver'//'archiver' or 'node-native-zip'
 	,delRawPackage:true
@@ -65,7 +71,7 @@ fs.stat(process.argv[2], function(err, stats) {
 		appFolder = path.resolve(appFolder);
 		fs.mkdir(appFolder+'/'+config.deployFolder, function(err) {
 			//if (err) console.log(err);
-			appPackage = appFolder + "/" + config.deployFolder +"/"+path.basename(appFolder)+ config.packageExt;
+			appPackage = appFolder + "/" + config.deployFolder +"/"+path.basename(appFolder)+ config.fsExt;
 		
 			fs.exists(appFolder+"/"+config.appInfoFile,function(exists) {
 			
@@ -78,7 +84,7 @@ fs.stat(process.argv[2], function(err, stats) {
 						console.log(err);
 					  } else {
 						appInfo = JSON.parse(data);
-						appPackage = appFolder + "/" + config.deployFolder +"/"+appInfo.name+ config.packageExt;
+						appPackage = appFolder + "/" + config.deployFolder +"/"+appInfo.name+ config.fsExt;
 		
 					  }
 					scanModules();
@@ -291,7 +297,7 @@ function scanModules() {
 //package module
 function packModule(module,moduleName,appFolder,callBack) {
 	modulesWaiting++;
-	var modulePack = appFolder+"/"+config.deployFolder+"/"+moduleName+config.modulePackageExt;
+	var modulePack = appFolder+"/"+config.deployFolder+"/"+moduleName+config.modulefsExt;
 	var exclude = {};
 	walk(module,function(err,files) {
 		if (err) {
